@@ -1,0 +1,340 @@
+
+
+    import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+    import { UntypedFormGroup, UntypedFormBuilder, UntypedFormControl, Validators, FormGroupDirective, ValidatorFn, AbstractControl } from '@angular/forms';
+    import { validationService, validateSignalMinStrength, frequencyValidate, gainValidate, signalValidate } from 'src/app/core/services/others/formValidations.service';
+    import swal from 'sweetalert2';
+    
+    
+    @Component({
+      selector: 'app-activity-detail',
+      templateUrl: './activity-detail.component.html',
+      styleUrls: ['../ragscoring.component.scss']
+    })
+    export class ActivityDetailComponent implements OnInit {
+    
+      @Input() activity: any;
+      @Input() currentUser: any;
+      @Input() mainData: any;
+    
+      @Output() deleteActivity = new EventEmitter<any>();
+      @Output() updateActivity = new EventEmitter<any>();
+      @Output() cancelActivity = new EventEmitter<any>();
+    
+      activityForm: UntypedFormGroup;
+      heroForm: UntypedFormGroup;
+      isDisable = true;
+      //inicial variables  onInit
+      Locator: any;
+      Antenna: any;
+      LineSonde: any;
+      frequency: any;
+      SurveyLength: any;
+      GainLow: any;
+      GainHigh: any;
+      SignalStrength: any;
+      //completeSchema
+      modesAntenna: any;
+      modesfrequency: any;
+      modesLocator: any;
+      inputGainMax = 0;
+      inputMinFrequency = 0;
+      inputMaxFrequency = 0;
+    
+      constructor(
+        private fb: UntypedFormBuilder
+      ) { }
+    
+      ngOnInit() {
+        this.LineSonde = this.mainData.LineSonde
+        this.Antenna = this.mainData.Antenna
+        this.Locator = this.mainData.Locator
+        this.frequency = this.mainData.frequency
+        this.SurveyLength = this.mainData.SurveyLength
+        this.GainLow = this.mainData.GainLow
+        this.GainHigh = this.mainData.GainHigh
+        this.SignalStrength = this.mainData.SignalStrength
+        this.modesAntenna = this.mainData.modesAntenna
+        this.modesfrequency = this.mainData.modesfrequency
+        this.modesLocator = this.mainData.modesLocator;
+    
+    
+    
+        this.getParameters(this.activity)
+        this.isDisable = this.currentUser.roles[0].value == 'DistrictManager' ? false : true;
+        this.activityForm = this.fb.group(
+          {
+            idActivity: new UntypedFormControl(
+              { value: this.activity._id, disabled: true },
+              [Validators.required],
+            ),
+            idUtility: new UntypedFormControl(
+              { value: this.activity.utility_id, disabled: true },
+              [Validators.required],
+            ),
+            nameActivity: new UntypedFormControl(
+              { value: this.activity.label, disabled: this.isDisable },
+              [Validators.required],
+            ),
+            locatorMode: new UntypedFormControl(
+              {
+                value: this.activity.locatorMode,
+                disabled: this.isDisable,
+              },
+              [Validators.required],
+            ),
+            lineSonde: new UntypedFormControl(
+              {
+                value: this.activity.lineSonde,
+                disabled:
+                  this.isDisable || this.activity.disabledLineSonde
+                    ? true
+                    : false,
+              },
+              [],
+            ),
+            frequencyLow: new UntypedFormControl(
+              {
+                value: this.activity.frequencyLow,
+                disabled: this.isDisable,
+              },
+              [],
+            ),
+            frequencyLowAdapt: new UntypedFormControl(
+              {
+                value: this.activity.frequencyLowAdapt,
+                disabled: this.isDisable,
+              },
+              [],
+            ),
+    
+            
+            frequencyHigh: new UntypedFormControl(
+              {
+                value: this.activity.frequencyHigh,
+                disabled: this.isDisable,
+              },
+              [],
+            ),
+            frequencyHighAdapt: new UntypedFormControl(
+              {
+                value: this.activity.frequencyHighAdapt,
+                disabled: this.isDisable,
+              },
+              [],
+            ),
+            antennaMode: new UntypedFormControl(
+              {
+                value: this.activity.antennaMode,
+                disabled: this.isDisable,
+              },
+              [Validators.required],
+            ),
+            stateOverload: new UntypedFormControl(
+              {
+                value: this.activity.stateOverload,
+                disabled: this.isDisable,
+              },
+              [],
+            ),
+            lowerMin: new UntypedFormControl(
+              { value: this.activity.lowerMin, disabled: this.isDisable },
+              [],
+            ),
+            lowerMax: new UntypedFormControl(
+              { value: this.activity.lowerMax, disabled: this.isDisable },
+              [],
+            ),
+            upperMin: new UntypedFormControl(
+              { value: this.activity.upperMin, disabled: this.isDisable },
+              [],
+            ),
+            upperMax: new UntypedFormControl(
+              { value: this.activity.upperMax, disabled: this.isDisable },
+              [],
+            ),
+            gainLow: new UntypedFormControl(
+              { value: this.activity.gainLow, disabled: this.isDisable },
+              [
+                Validators.required,
+              ],
+            ),
+            gainHigh: new UntypedFormControl(
+              { value: this.activity.gainHigh, disabled: this.isDisable },
+              [
+                Validators.required,
+    
+              ],
+            ),
+            signalMin: new UntypedFormControl(
+              {
+                value: this.activity.signalMin,
+                disabled: this.isDisable,
+              },
+              [Validators.required, Validators.min(0)],
+            ),
+            signalMax: new UntypedFormControl(
+              {
+                value: this.activity.signalMax,
+                disabled: this.isDisable,
+              },
+              [Validators.required, Validators.min(0)],
+            ),
+            signalMinStrength: new UntypedFormControl(
+              {
+                value: this.activity.signalMinStrength,
+                disabled: this.isDisable,
+              },
+              [Validators.required, Validators.min(0)],
+            ),
+          },
+          {
+            validator: [frequencyValidate(), signalValidate(), validateSignalMinStrength(), gainValidate()], //, gainValidate()
+          },
+        );
+    
+        
+        
+        this.activityForm.controls['lineSonde'].valueChanges
+          .pipe()
+          .subscribe((value) => {
+            if (this.activityForm.controls['locatorMode'].value == 1) {
+              if (value == "0") {
+                this.activity.modesAntenna = this.modesAntenna.filter(id => id.text == "Peak" || id.text == "Broad Peak" || id.text == "Null" || id.text == "Peak+" || id.text == "Guidance");
+                this.activity.modesfrequency = this.modesfrequency.filter(id => id.text == "512Hz" || id.text == "570Hz" || id.text == "577Hz" || id.text == "640Hz" || id.text == "760Hz" || id.text == "870Hz" || id.text == "920Hz" || id.text == "940Hz" || id.text == '1090Hz' || id.text == '1450Hz' || id.text == "8kHz (8192Hz)" || id.text == '8440Hz' || id.text == "9.8kHz (9820Hz)" || id.text == "33kHz (32768Hz)" || id.text == "65kHz (65536Hz)" || id.text == '82kHz (82000Hz)' || id.text == "83kHz (83077Hz)" || id.text == "131kHz (131072Hz)" || id.text == "200kHz (200000Hz)");
+              }
+              
+              if (value == "1") {
+                this.activity.modesAntenna = this.modesAntenna.filter(id => id.text == "Peak" || id.text == "Broad Peak" || id.text == "Null" || id.text == "Peak+" || id.text == "Guidance");
+                this.activity.modesfrequency = this.modesfrequency.filter(id => id.text == "512Hz" || id.text == "640Hz" || id.text == "8kHz (8192Hz)" || id.text == "33kHz (32768Hz)");
+              }
+            }
+            if (this.activityForm.controls['locatorMode'].value == "f") {
+              this.changefrequencyRules('High');
+              this.activity.modesAntenna = this.modesAntenna.filter(id => id.text == "Peak" || id.text == "Broad Peak" || id.text == "Null" || id.text == "Peak+" || id.text == "Guidance");
+              this.activity.modesfrequency = this.modesfrequency.filter(id => id.text == "50Hz to 1000Hz");
+              this.activityForm.controls['frequencyLowAdapt'].reset();
+              this.activityForm.controls['frequencyHighAdapt'].reset();
+            } else {
+              this.activityForm.controls['frequencyLow'].reset();
+              this.activityForm.controls['frequencyHigh'].reset();
+              this.activityForm.controls['frequencyLowAdapt'].reset();
+              this.activityForm.controls['frequencyHighAdapt'].reset();
+            }
+            let setGainValue = ['2', '3', '4', '8']
+            if (setGainValue.includes(this.activityForm.controls['locatorMode'].value)) {
+              this.inputGainMax = 120;
+              this.activityForm.controls['gainLow'].setErrors(null);
+              this.activityForm.controls['gainHigh'].setErrors(null);
+    
+            } else {
+              this.activityForm.controls['gainLow'].setErrors(null);
+              this.activityForm.controls['gainHigh'].setErrors(null);
+              this.inputGainMax = 140;
+            }
+            if (this.activityForm.controls['locatorMode'].value === 'f') {
+              this.inputMinFrequency = 50;
+              this.inputMaxFrequency = 1000;
+            } else if (this.activityForm.controls['locatorMode'].value === '11') {
+              this.inputMinFrequency = 220;
+              this.inputMaxFrequency = 679;
+            }
+          });
+    
+        this.activityForm.controls['stateOverload'].valueChanges
+          .pipe()
+          .subscribe((value) => {
+            this.activityForm.controls['lowerMin'].clearValidators()
+            this.activityForm.controls['upperMin'].clearValidators()
+            this.activityForm.controls['lowerMax'].clearValidators()
+            this.activityForm.controls['upperMax'].clearValidators()
+            this.activityForm.controls['lowerMin'].reset()
+            this.activityForm.controls['upperMin'].reset()
+            this.activityForm.controls['lowerMax'].reset()
+            this.activityForm.controls['upperMax'].reset()
+            if (value) {
+              this.activityForm.controls['lowerMin'].setValidators([this.validateDuration(), Validators.min(0), Validators.max(59), Validators.required])
+              this.activityForm.controls['upperMin'].setValidators([this.validateDuration(), Validators.min(0), Validators.max(59), Validators.required])
+              this.activityForm.controls['lowerMax'].setValidators([this.validateDuration(), Validators.min(0), Validators.max(59), Validators.required])
+              this.activityForm.controls['upperMax'].setValidators([this.validateDuration(), Validators.min(0), Validators.max(59), Validators.required])
+            }
+            this.activityForm.controls['lowerMin'].updateValueAndValidity()
+            this.activityForm.controls['upperMin'].updateValueAndValidity()
+            this.activityForm.controls['lowerMax'].updateValueAndValidity()
+            this.activityForm.controls['upperMax'].updateValueAndValidity()
+          });
+    
+        this.activityForm.controls['locatorMode'].valueChanges.subscribe((value) => {
+    
+          this.activityForm.controls['antennaMode'].reset()
+          this.activityForm.controls['frequencyLow'].reset()
+          this.activityForm.controls['frequencyLowAdapt'].reset()
+          this.activityForm.controls['frequencyHigh'].reset()
+          this.activityForm.controls['frequencyHighAdapt'].reset()
+    
+          this.activityForm.controls['lineSonde'].clearValidators()
+          if (value == 'f' || value == '1')
+            this.activityForm.controls['lineSonde'].setValidators([Validators.required])
+    
+          if (value == 'f') {
+            this.activityForm.controls['frequencyLowAdapt'].setValidators([Validators.required,]);
+            this.activityForm.controls['frequencyHighAdapt'].setValidators([Validators.required,]);
+          }
+          this.activityForm.updateValueAndValidity()
+        })
+    
+        //setup duration rules
+        if (this.activity.stateOverload) {
+          this.activityForm.controls['lowerMin'].setValidators([this.validateDuration(), Validators.min(0), Validators.max(59), Validators.required])
+          this.activityForm.controls['upperMin'].setValidators([this.validateDuration(), Validators.min(0), Validators.max(59), Validators.required])
+          this.activityForm.controls['lowerMax'].setValidators([this.validateDuration(), Validators.min(0), Validators.max(59), Validators.required])
+          this.activityForm.controls['upperMax'].setValidators([this.validateDuration(), Validators.min(0), Validators.max(59), Validators.required])
+        }
+    
+        if (this.activityForm.controls['locatorMode'].value === 'f') {
+          this.changefrequencyRules('High')
+          this.inputMinFrequency = 50;
+          this.inputMaxFrequency = 1000;
+        } else if (this.activityForm.controls['locatorMode'].value === '11') {
+          this.changefrequencyRules('Low')
+          this.inputMinFrequency = 220;
+          this.inputMaxFrequency = 679;
+        }
+    
+        let setGainValue = ['2', '3', '4', '8']
+        if (setGainValue.includes(this.activityForm.controls['locatorMode'].value)) {
+          this.inputGainMax = 120;
+    
+        } else {
+          this.inputGainMax = 140;
+        }
+        this.activityForm.updateValueAndValidity();
+      }
+    
+      numberOnly(event): boolean {
+        const charCode = (event.which) ? event.which : event.keyCode;
+        if (charCode > 31 && (charCode < 48 || charCode > 57)) {
+          return false;
+        }
+        return true;
+      }
+    
+      showErrors() {
+        this.activityForm.markAllAsTouched()
+      }
+    
+      selectRestrictionValue(id) {
+        this.changefrequencyRules()
+    
+        this.activity.disabledLineSonde = true;
+        this.activityForm.controls["lineSonde"].disable();
+    
+        this.activity.modesAntenna = this.modesAntenna;
+        this.activity.modesfrequency = this.modesfrequency;
+    
+        this.activityForm.controls["lineSonde"].reset()
+        //this.setValues('lineSonde', '2')
+        if (id.value == "1") {
+          this.activity.disabledLineSonde = false;
+          this.activityForm.controls["lineSonde"].enable();
+          this.activity.modesfrequency = this.modesfrequency.filter(id => id.text == "512Hz" || id.text == "570Hz" || id.text == "577Hz" || id.text == "640Hz" || id.text == "760Hz" || id.text == "870Hz" || id.text == "920Hz" || id.text == "940Hz" || id.text == '1090Hz' || id.text == '1450Hz'

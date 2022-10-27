@@ -1,0 +1,97 @@
+.navbar.dark{
+    background : #222;
+    color : #fff;
+    border-bottom:1px solid #444;
+  }
+
+.navbar.dark .left .search input{
+    background : transparent;
+    color : white
+}
+
+.navbar.dark .left span{
+    color : #fff;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+
+.navbar{
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding : 10px 20px;
+    height: 50px;
+    border-bottom : 1px solid lightgray;
+    position : sticky;
+    top : 0;
+    background : #fff;
+    font-size: 24px;
+    font-weight: bold;
+    z-index : 999
+}
+
+.navbar .left{
+    display: flex;
+    align-items: center;
+    gap : 30px
+}
+
+.navbar .left .search{
+    display: flex;
+    align-items: center;
+    gap :10px;
+    border : 1px solid lightgray;
+    border-radius: 5px;
+}
+
+.navbar .left .search input{
+    border : none;
+    outline : none;
+    width : 500px;
+    height : 30px;
+}
+
+.navbar .right{
+    display: flex;
+    align-items: center;
+    gap : 20px;
+    font-weight: 500;
+}
+
+.navbar .right .user{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+
+    
+}
+
+.navbar .right .user img{
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.navbar .right .user span{
+
+}
+
+@media screen and (max-width:480px) {
+    .navbar .left .search input{
+        display: none;
+    }
+}
+
+@media screen and (max-width:960px) {
+    .navbar .left .search input{
+        width: 200px;
+    }
+
+    .navbar .right .user {
+        display: none;
+    }
+}

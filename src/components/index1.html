@@ -1,0 +1,287 @@
+
+    import { Injectable } from '@angular/core';
+    import { ValidatorFn, AbstractControl, UntypedFormGroup, Validators } from '@angular/forms';
+    
+    @Injectable({
+      providedIn: 'root'
+    })
+    export class validationService {
+      static getValidatorErrorMessage(validatorName: string, validatorValue?: any) {
+        let config = {
+          'invalidOnlyNumbers': 'They must include only positive numbers',
+          'required': 'Required field',
+          'bothrequired': 'Both fields are required',
+          'max': `Please enter a maximum frequency up to  ${validatorValue.max}`,
+          'min': `Please enter a minimum frequency ${validatorValue.min}`,
+          'frequencyHigh': `Frequency High must be higher than Frequency Low`,
+          'frequencyLow': `Frequency Low must be lower than Frequency High`,
+          'gainHigh': `Gain max must be higher than Gain min`,
+          'gainLow': `Gain min must be lower than Gain max`,
+          'signalHigh': `Signal max must be higher than Signal min`,
+          'signalLow': `Signal min must be lower than Signal max`,
+          'timeHigh': `Upper Limit must be higher than Lower Limit`,
+          'timeLow': `Lower Limit must be lower than Upper Limit`,
+          'secondHigh': `Upper Limit must be higher than Lower Limit`,
+          'secondLow': `Lower Limit must be lower than Upper Limit`,
+          'timeError': `Please enter a value between 0 and 59`,
+          'incorrectDateRageFormat': `Please enter a valid format (mm/dd/yyyy - mm/dd/yyyy)`,
+          'incorrectFormat': `Please enter a valid format`,
+          'minSec': `Minimum seconds cannot be zero`,
+          'targetSec': `Target seconds cannot be zero`,
+          'maxDuration': `Please enter maximum duration value up to ${validatorValue.max}`,
+          'maxGain': `Please enter gain up to  ${validatorValue.max}`,
+          'minSignal': `Please enter a minimum signal(%) up to  ${validatorValue.max}`,
+          'Minutes': 'Minutes cant be zero',
+          'Seconds': 'Seconds cant be zero',
+          'activityName': 'Invalid name activity, atleast one alphanumeric characters must be present',
+          'minActivityName': 'Name activity should contain minimum 3 characters',
+          'maxActivityName': 'Name activity should not contain more than 256 characters'
+        };
+        return config[validatorName];
+      }
+    
+      static onlyNumbersValidator(control) {
+        if (control.value.match(/^[0-9]*$/)) {
+          return null;
+        } else {
+          return { 'invalidOnlyNumbers': true };
+        }
+      }
+      static onlyPositiveNumbersValidator(control) {
+    
+        if (control.value && Math.sign(control.value) >= 0) {
+          return null;
+        } else {
+          return { 'invalidOnlyNumbers': true };
+        }
+      }
+      static onlyFloatNumbersValidator(control) {
+        if (control.value.match(/^([0-9]*[.])?[0-9]*$/)) {
+          return null;
+        } else {
+          return { 'invalidOnlyFloatNumbers': true };
+        }
+      }
+    
+      static timeValidator(control) {
+        if (control.value >= 0 && control.value <= 59) {
+          return null;
+        } else {
+          return { 'timeError': true };
+        }
+      }
+    
+      static secondLessThan(secondUpper, minLower, minUpper): ValidatorFn {
+        return (high: AbstractControl): { [key: string]: any } | null => {
+          if (minLower.value == minUpper.value) {
+            if (high.value >= secondUpper.value) {
+              return { 'secondLow': true };
+            } else {
+              return null;
+            }
+          } else {
+            return null;
+          }
+        }
+      }
+    
+    
+      static secondGreateThan(secondLower, minLower, minUpper): ValidatorFn {
+        return (high: AbstractControl): { [key: string]: any } | null => {
+          if (minLower.value == minUpper.value) {
+            if (high.value <= secondLower.value) {
+              return { 'secondHigh': true };
+            } else {
+              return null;
+            }
+          } else {
+            return null;
+          }
+        }
+      }
+      static greateThan(low: AbstractControl, errorName: string) {
+        return (high: AbstractControl): { [key: string]: any } | null => {
+          let ErrorName = `${errorName}High`;
+          let result = {};
+          result[ErrorName] = true;
+          if (high.value < low.value) {
+            return result;
+          } else {
+            return null;
+          }
+        }
+      }
+      static lessThan(high: AbstractControl, errorName: string) {
+        return (low: AbstractControl): { [key: string]: any } | null => {
+          let ErrorName = `${errorName}Low`;
+          let result = {};
+          result[ErrorName] = true;
+          if (low.value > high.value) {
+            return result;
+          } else {
+            return null;
+          }
+        }
+      }
+    
+    
+    }
+    
+    export function frequencyValidate() {
+      return (formGroup: UntypedFormGroup) => {
+        const low = formGroup.controls['frequencyLow'];
+        const high = formGroup.controls['frequencyHigh'];
+    
+        console.log(low,high)
+        
+        if (!low.value || !high.value) {
+          high.setErrors({ bothrequired: true });
+          return
+        } else {
+          high.setErrors(null);
+    
+        }
+
+
+        
+        // set error on matchingControl if validation fails
+        if (+high.value < +low.value) {
+    
+          if (high.errors && !high.errors.frequencyHigh) {
+            // return if another validator has already found an error on the matchingControl
+            return;
+          }
+          high.setErrors({ frequencyHigh: true });
+        } else {
+          if (low.errors && !low.errors.frequencyLow) {
+            // return if another validator has already found an error on the matchingControl
+            return;
+          }
+          if (high.errors && !high.errors.frequencyHigh) {
+            // return if another validator has already found an error on the matchingControl
+            return;
+          }
+          low.setErrors(null);
+          high.setErrors(null);
+        } 
+      }
+    }
+    
+    export function signalValidate() {
+      return (formGroup: UntypedFormGroup) => {
+        const low = formGroup.controls['signalMin'];
+        const high = formGroup.controls['signalMax'];
+        switch (true) {
+          case low.value === '' || low.value === null:
+            low.setErrors({ required: true });
+            break;
+          case high.value === '' || high.value === null:
+            high.setErrors({ required: true });
+            break;
+          case high.value === 0:
+            high.setErrors({ targetSec: true });
+            break;
+          case low.value === 0:
+            low.setErrors({ minSec: true });
+            break;
+          case high.value === 0:
+            high.setErrors({ targetSec: true });
+            break;
+          case low.value > 3600:
+            low.setErrors({ maxDuration: { max: 3600 } });
+            break;
+          case high.value > 3600:
+            high.setErrors({ maxDuration: { max: 3600 } });
+            break;
+          case (+high.value < +low.value):
+            if (high.errors && !high.errors.signalHigh) {
+              // return if another validator has already found an error on the matchingControl
+              return;
+            }
+            high.setErrors({ signalHigh: true });
+            break;
+          case (+low.value > +high.value):
+            if (low.errors && !low.errors.signalLow) {
+              // return if another validator has already found an error on the matchingControl
+              return;
+            }
+            low.setErrors({ signalLow: true });
+            break;
+          default:
+            high.setErrors(null);
+            low.setErrors(null)
+        }
+      }
+    }
+    
+    export function validateSignalMinStrength() {
+      return (formGroup: UntypedFormGroup) => {
+        const minSignal = formGroup.controls['signalMinStrength'];
+        switch (true) {
+          case minSignal.value === '' || minSignal.value === null:
+            minSignal.setErrors({ required: true });
+            break;
+          case minSignal.value > 100:
+            minSignal.setErrors({ minSignal: { max: 100 } });
+            break;
+            break;
+          default:
+            minSignal.setErrors(null);
+        }
+      }
+    }
+    
+    export function gainValidate() {
+      return (formGroup: UntypedFormGroup) => {
+        const low = formGroup.controls['gainLow'];
+        const high = formGroup.controls['gainHigh'];
+    
+        if ((low.value === '' || low.value === null) && (high.value === '' || high.value === null)) {
+          low.setErrors({ required: true });
+          high.setErrors({ required: true });
+          return
+        } else if (low.value === '' || low.value === null) {
+          low.setErrors({ required: true });
+          return
+        } else if (high.value === '' || high.value === null) {
+          high.setErrors({ required: true });
+          return
+        } else {
+          low.setErrors(null);
+          low.setErrors(null);
+        }
+    
+        const locatorMode = formGroup.controls['locatorMode']
+        let maxVal = 140
+        let setGainValue = ['2', '3', '4', '8']
+        if (setGainValue.includes(locatorMode.value)) {
+          maxVal = 120;
+        }
+    
+        switch (true) {
+          case low.value > maxVal:
+            low.setErrors({ maxGain: { max: maxVal } });
+            break;
+          case high.value > maxVal:
+            high.setErrors({ maxGain: { max: maxVal } });
+            break;
+          case (+high.value < +low.value):
+            if (high.errors && !high.errors.gainHigh) {
+              // return if another validator has already found an error on the matchingControl
+              return;
+            }
+            high.setErrors({ gainHigh: true });
+            break;
+          case (+low.value > +high.value):
+            if (low.errors && !low.errors.gainLow) {
+              // return if another validator has already found an error on the matchingControl
+              return;
+            }
+            low.setErrors({ gainLow: true });
+            break;
+          default:
+            high.setErrors(null);
+            low.setErrors(null)
+        }
+      }
+    }
